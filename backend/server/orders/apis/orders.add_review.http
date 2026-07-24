@@ -1,0 +1,6 @@
+### Review an order
+POST http://127.0.0.1:8000/orders/<order_uuid>/add_review/
+{
+    "review": "Great service!",
+    "rating": 5
+}

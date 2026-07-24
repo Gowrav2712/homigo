@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+venv/
+env/
+ENV/
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+*.log
+media/
+static/
+
+# Environment variables
+.env
+.env.local
+
+# Build output
+build/
+dist/
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+dump.rdb

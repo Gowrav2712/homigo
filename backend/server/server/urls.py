@@ -1,0 +1,51 @@
+"""
+URL configuration for server project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/4.2/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+
+
+
+from django.contrib import admin
+from django.urls import path,include
+from django.conf import settings
+from django.conf.urls.static import static
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+
+from client.password_reset_views import (
+    SendResetCodeView,
+    VerifyResetCodeView,
+    ResetPasswordConfirmView
+)
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('client/', include('client.urls')), 
+    path('services/', include('service.urls')),
+    path('orders/',include('orders.urls')),
+    path('service_providers/',include('service_provider.urls')),
+    path('notifications/', include('notifications.urls')),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('sub_services/', include('sub_service.urls')),
+    path('password_reset/send_code/', SendResetCodeView.as_view(), name='forgot_password_send_code'),
+    path('password_reset/verify_code/', VerifyResetCodeView.as_view(), name='forgot_password_verify_code'),
+    path('password_reset/reset_password/', ResetPasswordConfirmView.as_view(), name='forgot_password_reset'),
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
+
