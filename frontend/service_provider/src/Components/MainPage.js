@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from "../config";
 import {
   Box, Typography, Divider, Button, Alert, CircularProgress,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
@@ -321,7 +322,7 @@ const MainPage = () => {
     try {
       const providerId = localStorage.getItem("providerId");
       const response = await axios.get(
-        `http://127.0.0.1:8000/orders/?provider_id=${providerId}`
+        `${API_BASE_URL}/orders/?provider_id=${providerId}`
       );
 
       const pending = [];
@@ -356,7 +357,7 @@ const MainPage = () => {
   const fetchClientDetails = async (clientId) => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:8000/client/${clientId}/`
+        `${API_BASE_URL}/client/${clientId}/`
       );
       setClients((prev) => ({ ...prev, [clientId]: response.data }));
     } catch (err) {
@@ -367,7 +368,7 @@ const MainPage = () => {
   const fetchServiceDetails = async (providerId) => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:8000/service_providers/${providerId}/`
+        `${API_BASE_URL}/service_providers/${providerId}/`
       );
       const serviceMap = {};
       response.data.provider_services.forEach((service) => {
@@ -382,7 +383,7 @@ const MainPage = () => {
   const handleUpdateStatus = async (orderId, status) => {
     try {
       const response = await axios.patch(
-        `http://127.0.0.1:8000/orders/${orderId}/status/`,
+        `${API_BASE_URL}/orders/${orderId}/status/`,
         { status }
       );
 

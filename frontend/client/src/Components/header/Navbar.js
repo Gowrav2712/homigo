@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from "../../config";
 import { useNavigate } from "react-router-dom";
 import MapIcon from "@mui/icons-material/Map";
 import {
@@ -104,7 +105,6 @@ const LocationChip = styled(Chip)(({ theme }) => ({
 
 const StyledAutocomplete = styled(Autocomplete)(({ theme }) => ({
   width: "100%",
-  maxWidth: "23rem",
   "& .MuiOutlinedInput-root": {
     backgroundColor: alpha(theme.palette.grey[100], 0.8),
     borderRadius: "8px",
@@ -128,6 +128,7 @@ const StyledAutocomplete = styled(Autocomplete)(({ theme }) => ({
     padding: "7.5px 4px 7.5px 0 !important",
     height: "25px",
     fontSize: "0.875rem",
+    color: theme.palette.text.primary,
   },
 }));
 
@@ -141,9 +142,9 @@ const Navbar = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [locationAnchorEl, setLocationAnchorEl] = useState(null);
   const [userName, setUserName] = useState("");
+  const [allSubServices, setAllSubServices] = useState([]);
   const [searchValue, setSearchValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
-  const [searchTimeout, setSearchTimeout] = useState(null);
   const [filteredServices, setFilteredServices] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
@@ -165,47 +166,32 @@ const Navbar = () => {
     setLocation,
   } = useWelcomeViewContext();
 
-  // Fetch subservices from the backend
-  const fetchSubServices = async (searchTerm = "") => {
-    try {
-      setIsSearching(true);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const response = await fetch(
-        "http://127.0.0.1:8000/sub_services/listAll/"
-      );
-      const data = await response.json();
-
-      if (data.status && data.data.results) {
-        if (searchTerm) {
-          const filtered = data.data.results.filter((service) =>
-            service.name.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-          setFilteredServices(filtered);
-        } else {
-          setFilteredServices([]);
+  // Fetch subservices once on mount for instant native Autocomplete searching
+  useEffect(() => {
+    const fetchAllSubServices = async () => {
+      try {
+        setIsSearching(true);
+        const response = await fetch(`${API_BASE_URL}/sub_services/listAll/`);
+        const data = await response.json();
+        if (data.status && data.data?.results) {
+          setAllSubServices(data.data.results);
         }
+      } catch (error) {
+        console.error("Error fetching subservices:", error);
+      } finally {
+        setIsSearching(false);
       }
-    } catch (error) {
-      console.error("Error fetching subservices:", error);
-      setFilteredServices([]);
-    } finally {
-      setIsSearching(false);
+    };
+
+    fetchAllSubServices();
+  }, []);
+
+  const handleSearchInput = (event, newInputValue, reason) => {
+    setInputValue(newInputValue);
+    if (reason === "input" || reason === "clear") {
+      setSearchValue(null);
     }
   };
-
-  const handleSearchInput = (event, newInputValue) => {
-    setInputValue(newInputValue);
-    if (searchTimeout) clearTimeout(searchTimeout);
-    const newTimeout = setTimeout(() => {
-      fetchSubServices(newInputValue);
-    }, 300);
-    setSearchTimeout(newTimeout);
-  };
-
-  useEffect(() => {
-    fetchSubServices();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -296,6 +282,7 @@ const Navbar = () => {
     setSearchValue(newValue);
     if (newValue) {
       setSelectedSubService(newValue);
+      setMobileSearchOpen(false);
       navigate(`/service/${newValue.main_service}`);
     }
   };
@@ -306,14 +293,15 @@ const Navbar = () => {
       onChange={handleSearchChange}
       inputValue={inputValue}
       onInputChange={handleSearchInput}
-      options={filteredServices}
-      getOptionLabel={(option) => option.name || ""}
+      options={allSubServices}
+      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      getOptionLabel={(option) => (typeof option === "string" ? option : option?.name || "")}
       loading={isSearching}
-      loadingText="Searching..."
+      loadingText="Loading services..."
       noOptionsText="No services found"
       ListboxProps={{
         sx: {
-          maxHeight: "400px",
+          maxHeight: "350px",
           "& .MuiAutocomplete-listbox": { padding: 0 },
         },
       }}
@@ -338,7 +326,7 @@ const Navbar = () => {
                     size="small"
                     onClick={() => {
                       setInputValue("");
-                      setFilteredServices([]);
+                      setSearchValue(null);
                     }}
                     sx={{
                       p: 0.5,
@@ -364,6 +352,7 @@ const Navbar = () => {
       renderOption={(props, option) => (
         <MenuItem
           {...props}
+          key={option.id}
           sx={{
             py: 1.5,
             px: 2,
@@ -380,19 +369,6 @@ const Navbar = () => {
             >
               {option.name}
             </Typography>
-            {option.description && (
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "grey.600",
-                  display: "block",
-                  mt: 0.5,
-                  wordWrap: "break-word",
-                }}
-              >
-                {option.description}
-              </Typography>
-            )}
           </Box>
         </MenuItem>
       )}
@@ -685,15 +661,30 @@ const Navbar = () => {
         onClose={() => setMobileSearchOpen(false)}
         fullWidth
         maxWidth="sm"
-        PaperProps={{ sx: { m: 2, borderRadius: 3, p: 2 } }}
+        sx={{
+          "& .MuiDialog-container": {
+            alignItems: "flex-start",
+            pt: { xs: 1, sm: 3 },
+          },
+        }}
+        PaperProps={{
+          sx: {
+            m: { xs: 1, sm: 2 },
+            mt: { xs: 1, sm: 2 },
+            borderRadius: 3,
+            p: 2,
+            width: "calc(100% - 16px)",
+            maxHeight: "85vh",
+          },
+        }}
       >
-        <DialogTitle sx={{ pb: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography fontWeight={700}>Search Services</Typography>
+        <DialogTitle sx={{ pb: 1, pt: 0.5, px: 0.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography fontWeight={700} variant="subtitle1">Search Services</Typography>
           <IconButton size="small" onClick={() => setMobileSearchOpen(false)}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ pt: 0 }}>
+        <DialogContent sx={{ pt: 1, px: 0.5, pb: 1 }}>
           {searchComponent}
         </DialogContent>
       </Dialog>

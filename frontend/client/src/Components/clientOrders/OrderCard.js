@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from "../../config";
 import {
   Box,
   Card,
@@ -108,7 +109,7 @@ const OrderCard = ({ order, onOrderUpdate }) => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/orders/${order.id}/status/`,
+        `${API_BASE_URL}/orders/${order.id}/status/`,
         {
           method: "PATCH",
           headers: {
@@ -142,7 +143,7 @@ const OrderCard = ({ order, onOrderUpdate }) => {
   const handleSubmitReview = async (orderId, rating, reviewText) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/orders/${orderId}/review/`,
+        `${API_BASE_URL}/orders/${orderId}/review/`,
         {
           method: "PATCH",
           headers: {

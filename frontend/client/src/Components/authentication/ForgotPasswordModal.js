@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../../config';
 import {
   Dialog,
   DialogTitle,
@@ -51,7 +52,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://127.0.0.1:8000/password_reset/send_code/', { email });
+      const response = await axios.post(`${API_BASE_URL}/password_reset/send_code/`, { email });
       setSuccessMsg(response.data.message || 'Verification code sent to your registered Gmail.');
       setStep(2);
     } catch (err) {
@@ -90,7 +91,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://127.0.0.1:8000/password_reset/reset_password/', {
+      const response = await axios.post(`${API_BASE_URL}/password_reset/reset_password/`, {
         email,
         code,
         new_password: newPassword

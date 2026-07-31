@@ -1,4 +1,5 @@
 import React, {useState, useEffect, useRef} from "react";
+import { API_BASE_URL } from "../config";
 import {useNavigate} from "react-router-dom";
 import {useWelcomeViewContext} from "../Contexts/WelcomeViewContextProvider";
 import axios from "axios";
@@ -38,7 +39,7 @@ const RegistrationPage = () => {
   useEffect(() => {
     const fetchMainServices = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/services/');
+        const response = await axios.get(`${API_BASE_URL}/services/`);
         if(response.data.status) {
           const filteredServices = response.data.data.results.map(service => ({
             id: service.data.id,
@@ -85,7 +86,7 @@ const RegistrationPage = () => {
       });
 
       const response = await axios.post(
-        'http://127.0.0.1:8000/service_providers/signup/',
+        `${API_BASE_URL}/service_providers/signup/`,
         formDataToSend,
         {
           headers: {

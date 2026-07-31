@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { API_BASE_URL } from '../config';
 import { Box, Typography, Button, useMediaQuery, useTheme } from '@mui/material';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -115,7 +116,7 @@ const ServiceSlider = () => {
   const { setSelectedSubService } = useWelcomeViewContext();
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/services/')
+    fetch(`${API_BASE_URL}/services/`)
       .then(res => res.json())
       .then(data => {
         if (data.status && data.data && data.data.results) {

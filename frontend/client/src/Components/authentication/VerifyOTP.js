@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../config';
 import { useWelcomeViewContext } from '../../Contexts/WelcomeViewContextProvider';
 import emailjs from 'emailjs-com';
 import { Typography, Button, Box, TextField, Alert } from '@mui/material';
@@ -128,7 +129,7 @@ const VerifyOTP = () => {
       try {
         // Make the signup API call with the stored signUpData
         console.log("signUpData:", signUpData);
-        const response = await fetch('http://127.0.0.1:8000/client/signup/', {
+        const response = await fetch(`${API_BASE_URL}/client/signup/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

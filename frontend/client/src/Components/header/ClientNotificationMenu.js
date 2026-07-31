@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { WS_BASE_URL } from '../../config';
 import { 
   Badge,
   IconButton,
@@ -67,7 +68,7 @@ const ClientNotificationMenu = () => {
     // WebSocket connection logic remains the same
     if (!userId) return;
 
-    const wsUrl = `ws://127.0.0.1:8000/ws/notifications/${userId}/`;
+    const wsUrl = `${WS_BASE_URL}/ws/notifications/${userId}/`;
     console.log('Connecting to WebSocket:', wsUrl);
     
     websocket.current = new WebSocket(wsUrl);

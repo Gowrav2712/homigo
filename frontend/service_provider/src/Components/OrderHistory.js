@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { API_BASE_URL } from "../config";
 import { Chart } from "react-google-charts";
 import axios from "axios";
 import {
@@ -93,8 +94,7 @@ export default function EnhancedOrderDashboard() {
       try {
         const providerId = localStorage.getItem("providerId");
         const response = await axios.get(
-          //"http://127.0.0.1:8000/orders/?provider_id=95261318-665e-438f-9879-fe515d0fba6d"
-          `http://127.0.0.1:8000/orders/?provider_id=${providerId}`
+          `${API_BASE_URL}/orders/?provider_id=${providerId}`
         );
         setOrders(response.data);
         console.log(response.data);

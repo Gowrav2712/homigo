@@ -16,8 +16,7 @@ import { Groups as GroupsIcon, Category as CategoryIcon } from '@mui/icons-mater
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useWelcomeViewContext } from "../Contexts/WelcomeViewContextProvider";
-
-
+import { API_BASE_URL } from '../config';
 
 const defaultServiceImages = {
   'Appliance Repair': '/service_images/appliance_repair.png',
@@ -51,7 +50,7 @@ const MainServices = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/services/');
+        const response = await fetch(`${API_BASE_URL}/services/`);
         const data = await response.json();
         if (data.status && data.data.results) {
           setServices(data.data.results.map(item => item.data));

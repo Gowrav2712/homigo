@@ -6,7 +6,7 @@ from chat.route import websocket_urlpatterns as chat_websocket_urlpatterns
 from notifications.routing import websocket_urlpatterns as notification_websocket_urlpatterns
 from django.urls import path
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
 
 # Combine websocket patterns from both apps
 combined_patterns = chat_websocket_urlpatterns + notification_websocket_urlpatterns

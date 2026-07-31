@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from "../config";
 import {
   Box,
   Typography,
@@ -33,7 +34,7 @@ const UserProfile = () => {
           throw new Error("No user ID found");
         }
 
-        const response = await fetch(`http://127.0.0.1:8000/client/${userId}/`);
+        const response = await fetch(`${API_BASE_URL}/client/${userId}/`);
         const data = await response.json();
 
         setUser(data);
@@ -41,6 +42,7 @@ const UserProfile = () => {
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching user profile:", error);
+        setErrorMessage("Failed to load user profile.");
         setIsLoading(false);
       }
     };
@@ -59,7 +61,7 @@ const UserProfile = () => {
   const handleSave = async () => {
     try {
       const userId = localStorage.getItem("userId");
-      const response = await fetch(`http://127.0.0.1:8000/client/${userId}/`, {
+      const response = await fetch(`${API_BASE_URL}/client/${userId}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

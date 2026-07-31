@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import {
   Box,
   Typography,
@@ -54,7 +55,7 @@ const ServiceProviderProfile = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/services/');
+        const response = await axios.get(`${API_BASE_URL}/services/`);
         if (response.data.status && response.data.data.results) {
           const list = response.data.data.results.map(item => item.data);
           setAllMainServices(list);
@@ -70,7 +71,7 @@ const ServiceProviderProfile = () => {
     const providerId = localStorage.getItem('providerId');
     const fetchProviderDetails = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:8000/service_providers/${providerId}/`);
+        const response = await axios.get(`${API_BASE_URL}/service_providers/${providerId}/`);
         const providerDetails = response.data;
 
         const mainServVal = providerDetails.main_service?.id || providerDetails.main_service;
@@ -148,7 +149,7 @@ const ServiceProviderProfile = () => {
     try {
       const providerId = localStorage.getItem('providerId');
       await axios.patch(
-        `http://127.0.0.1:8000/service_providers/${providerId}/`,
+        `${API_BASE_URL}/service_providers/${providerId}/`,
         formData,
         {
           headers: {

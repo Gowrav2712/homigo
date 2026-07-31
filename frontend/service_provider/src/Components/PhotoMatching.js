@@ -1,4 +1,5 @@
 import React, {useState, useRef, useEffect} from 'react';
+import { API_BASE_URL } from '../config';
 import {Box, Button, CircularProgress, Typography, Alert} from '@mui/material';
 import {Camera, Cameraswitch} from '@mui/icons-material';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -90,7 +91,7 @@ const PhotoMatching = (
       formDataToSend.append('image2', capturedPhotoBlob);
 
       const response = await axios.post(
-        'http://127.0.0.1:8000/service_providers/verify/',
+        `${API_BASE_URL}/service_providers/verify/`,
         formDataToSend,
         {
           headers: {

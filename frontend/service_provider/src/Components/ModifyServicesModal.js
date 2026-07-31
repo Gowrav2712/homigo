@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import {
   Modal, Box, Typography, TextField, IconButton, Paper
 } from '@mui/material';
@@ -23,7 +24,7 @@ const ModifyServicesModal = ({ open, onClose }) => {
 
   const fetchCurrentServices = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/service_providers/${providerId}/`);
+      const response = await axios.get(`${API_BASE_URL}/service_providers/${providerId}/`);
       const providerData = response.data;
       setCurrentServices(providerData.provider_services || []);
       
@@ -42,7 +43,7 @@ const ModifyServicesModal = ({ open, onClose }) => {
       const targetMainServiceId = serviceId || localStorage.getItem('mainServiceId');
       if (!targetMainServiceId) return;
       
-      const response = await axios.get(`http://127.0.0.1:8000/services/${targetMainServiceId}/subservices/`);
+      const response = await axios.get(`${API_BASE_URL}/services/${targetMainServiceId}/subservices/`);
       const currentServiceIds = (activeProviderServices || currentServices).map(service => service.sub_service.id);
       const filteredServices = response.data.data.results.filter(
         service => !currentServiceIds.includes(service.id)
@@ -55,7 +56,7 @@ const ModifyServicesModal = ({ open, onClose }) => {
 
   const handleRemoveService = async (serviceId) => {
     try {
-      await axios.post(`http://127.0.0.1:8000/service_providers/${providerId}/remove-services/`, {
+      await axios.post(`${API_BASE_URL}/service_providers/${providerId}/remove-services/`, {
         service_ids: [serviceId]
       });
 
@@ -86,7 +87,7 @@ const ModifyServicesModal = ({ open, onClose }) => {
     }
 
     try {
-      await axios.post(`http://127.0.0.1:8000/service_providers/${providerId}/add-services/`, {
+      await axios.post(`${API_BASE_URL}/service_providers/${providerId}/add-services/`, {
         services: [{
           sub_service: service.id,
           price: price

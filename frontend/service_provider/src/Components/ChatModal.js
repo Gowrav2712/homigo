@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { WS_BASE_URL } from '../config';
 import { 
   Dialog, DialogTitle, DialogContent, TextField, IconButton, 
   Box, Typography, Paper, InputAdornment, Avatar,
@@ -82,7 +83,7 @@ const ChatModal = ({open, onClose, orderId, providerId, providerName, clientId, 
   useEffect(() => {
     if(open) {
       const roomId = `${orderId}`;
-      const ws = new WebSocket(`ws://127.0.0.1:8000/ws/chat/${roomId}/`);
+      const ws = new WebSocket(`${WS_BASE_URL}/ws/chat/${roomId}/`);
       
       ws.onopen = () => {
         console.log('Connected to chat server');

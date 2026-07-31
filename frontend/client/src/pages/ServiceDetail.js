@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence} from 'framer-motion';
 import { useWelcomeViewContext } from "../Contexts/WelcomeViewContextProvider";
 import { ServiceProviderCard, SubServiceCard } from "../Components/StyledComponents";
+import { API_BASE_URL } from "../config";
 
 
 
@@ -118,8 +119,8 @@ const ServiceDetail = () => {
       try {
         setLoading(true);
         const [serviceResponse, subServicesResponse] = await Promise.all([
-          fetch(`http://127.0.0.1:8000/services/${serviceId}/`),
-          fetch(`http://127.0.0.1:8000/services/${serviceId}/subservices/`),
+          fetch(`${API_BASE_URL}/services/${serviceId}/`),
+          fetch(`${API_BASE_URL}/services/${serviceId}/subservices/`),
         ]);
 
         if (!serviceResponse.ok || !subServicesResponse.ok) {
@@ -164,7 +165,7 @@ const ServiceDetail = () => {
         const locationDataString = localStorage.getItem('userLocation');
         
         // Build base URL
-        const url = new URL(`http://127.0.0.1:8000/service_providers/${selectedSubService.id}/providers/`);
+        const url = new URL(`${API_BASE_URL}/service_providers/${selectedSubService.id}/providers/`);
         
         let lat = 12.2799972;
         let lon = 76.6520893;

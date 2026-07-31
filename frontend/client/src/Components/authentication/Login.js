@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from "../../config.js";
 import { useWelcomeViewContext } from "../../Contexts/WelcomeViewContextProvider.js";
 import { Typography, TextField, Button, Box, Link, IconButton, InputAdornment } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -25,11 +26,11 @@ const Login = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
     }));
-    // Clear errors when user starts typing
+    // Clear error when user types
     setErrors((prev) => ({
       ...prev,
       [name]: "",
@@ -47,7 +48,7 @@ const Login = () => {
     setErrors({ email: "", password: "", general: "" });
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/client/login/", {
+      const response = await fetch(`${API_BASE_URL}/client/login/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -432,5 +432,58 @@ class SubServiceProvidersViewSet(ReadOnlyModelViewSet):
         # Serialize and return the data
         serializer = self.get_serializer(provider_services_with_distance, many=True)
         return Response(serializer.data)
+
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            provider = serializer.validated_data['user']
+            refresh = RefreshToken.for_user(provider)
+            return Response({
+                'status': True,
+                'message': 'Login successful',
+                'data': {
+                    'access_token': str(refresh.access_token),
+                    'refresh_token': str(refresh),
+                    'provider_id': str(provider.id),
+                    'name': f"{provider.first_name} {provider.last_name}",
+                    'email': provider.email,
+                    'service_id': str(provider.main_service_id) if provider.main_service_id else None
+                }
+            }, status=status.HTTP_200_OK)
+        return Response({
+            'status': False,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SignupView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = ServiceProviderCreateUpdateSerializer(data=request.data)
+        if serializer.is_valid():
+            provider = serializer.save()
+            refresh = RefreshToken.for_user(provider)
+            return Response({
+                'status': True,
+                'message': 'Registration successful',
+                'data': {
+                    'access_token': str(refresh.access_token),
+                    'refresh_token': str(refresh),
+                    'provider_id': str(provider.id),
+                    'name': f"{provider.first_name} {provider.last_name}",
+                    'email': provider.email,
+                    'service_id': str(provider.main_service_id) if provider.main_service_id else None
+                }
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'status': False,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
         
         

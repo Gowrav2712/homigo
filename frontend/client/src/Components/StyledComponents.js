@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from "../config";
 import { useTheme } from "@mui/material/styles";
 import {
   Box,
@@ -134,7 +135,7 @@ export const ServiceProviderCard = ({ provider, index }) => {
 
     try {
       console.log(orderData);
-      const response = await fetch(`http://127.0.0.1:8000/orders/`, {
+      const response = await fetch(`${API_BASE_URL}/orders/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -165,7 +166,7 @@ export const ServiceProviderCard = ({ provider, index }) => {
   const fetchAvailableServices = async () => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/service_providers/provider_services/?provider_id=${provider.provider_id}`
+        `${API_BASE_URL}/service_providers/provider_services/?provider_id=${provider.provider_id}`
       );
       const data = await response.json();
       // Create a Set of IDs to avoid duplicates

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { useWelcomeViewContext } from "../Contexts/WelcomeViewContextProvider";
 import { Typography, TextField, Button, Box, Link, Alert, CircularProgress, IconButton, InputAdornment } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -61,7 +62,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/service_providers/login/', formData);
+      const response = await axios.post(`${API_BASE_URL}/service_providers/login/`, formData);
 
       if(response.data.status) {
         localStorage.setItem('accessToken', response.data.data.access_token);

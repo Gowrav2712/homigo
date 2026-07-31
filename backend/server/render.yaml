@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: fixngo-backend
+    env: python
+    rootDir: backend/server
+    buildCommand: "./render_build.sh"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT server.asgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
