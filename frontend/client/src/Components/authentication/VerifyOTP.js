@@ -20,7 +20,7 @@ const VerifyOTP = () => {
   } = useWelcomeViewContext();
     const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
   const [generatedOTP, setGeneratedOTP] = useState('');
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(120);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
 
@@ -117,7 +117,7 @@ const VerifyOTP = () => {
   const handleResendOTP = async () => {
     const newOTP = generateOTP();
     await sendOTP(newOTP);
-    setTimer(30);
+    setTimer(120);
     setIsResendDisabled(true);
     setOtpValues(['', '', '', '', '', '']);
   };
@@ -316,6 +316,10 @@ const VerifyOTP = () => {
             variant="outlined"
             inputProps={{
               maxLength: 1,
+              type: 'tel',
+              inputMode: 'numeric',
+              pattern: '[0-9]*',
+              autoComplete: 'one-time-code',
               style: {
                 textAlign: 'center',
                 fontSize: '1.5rem',

@@ -166,11 +166,17 @@ const ForgotPasswordModal = ({ open, onClose }) => {
             </Typography>
             <TextField
               label="6-Digit Verification Code"
+              type="tel"
               fullWidth
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              inputProps={{ maxLength: 6 }}
+              inputProps={{
+                maxLength: 6,
+                inputMode: 'numeric',
+                pattern: '[0-9]*',
+                autoComplete: 'one-time-code'
+              }}
               sx={{ mb: 2 }}
             />
             <TextField
