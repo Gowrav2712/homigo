@@ -1,9 +1,7 @@
 import React, {useState, useRef, useEffect} from 'react';
-import { API_BASE_URL } from '../config';
 import {Box, Button, CircularProgress, Typography, Alert} from '@mui/material';
 import {Camera, Cameraswitch} from '@mui/icons-material';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import axios from 'axios';
 
 const PhotoMatching = (
   {formData, setCurrentStep, handleFinalSubmit, isSubmitting, error, setError}
@@ -65,18 +63,6 @@ const PhotoMatching = (
     setCapturedPhoto(null);
     setVerificationResult(null);
     startCamera();
-  };
-
-  const dataURLtoBlob = (dataurl) => {
-    const arr = dataurl.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], {type: mime});
   };
 
   const handleVerify = async () => {

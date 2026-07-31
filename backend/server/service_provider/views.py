@@ -7,16 +7,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 # Third-party imports
 import os
-try:
-    import cv2
-    import numpy as np
-    from PIL import Image
-    from deepface import DeepFace
-except ImportError:
-    cv2 = None
-    np = None
-    Image = None
-    DeepFace = None
 
 
 # DRF imports
