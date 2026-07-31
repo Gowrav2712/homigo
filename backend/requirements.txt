@@ -86,3 +86,6 @@ wrapt==1.16.0
 zipp==3.20.2
 whitenoise==6.7.0
 daphne==4.1.2
+channels>=4.0.0
+channels-redis>=4.0.0
+
