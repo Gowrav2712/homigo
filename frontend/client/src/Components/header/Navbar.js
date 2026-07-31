@@ -145,7 +145,6 @@ const Navbar = () => {
   const [allSubServices, setAllSubServices] = useState([]);
   const [searchValue, setSearchValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
-  const [filteredServices, setFilteredServices] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
