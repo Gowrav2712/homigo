@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Notification
-from .serialziers import NotificationSerializer
+from .serializers import NotificationSerializer
 from service_provider.models import ServiceProvider
 from client.models import Client
 
