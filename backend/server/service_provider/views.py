@@ -47,9 +47,6 @@ from .serializers import (
 # Pagination
 from server.pagination import CustomPagination
 
-# Utilities
-from .validate_service_provider import FaceMatcher
-
 # Database
 from django.db import transaction
 
@@ -74,45 +71,6 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     r = 6371
     return c * r
 
-
-
-
-@api_view(['POST'])
-@parser_classes([MultiPartParser, FormParser])
-@permission_classes([AllowAny])
-def verify_faces(request):
-    image1 = request.FILES.get('image1')
-    image2 = request.FILES.get('image2')
-
-    if not image1 or not image2:
-        return Response({"success": False, "error": "Both images are required."}, status=400)
-
-    matcher = FaceMatcher()
-
-    try:
-        # Save the uploaded images to the 'images' folder in the project directory
-        images_dir = os.path.join(settings.BASE_DIR, 'images')
-        os.makedirs(images_dir, exist_ok=True)
-
-        img1_path = os.path.join('images', image1.name)
-        img2_path = os.path.join('images', image2.name)
-
-        with open(os.path.join(images_dir, image1.name), 'wb+') as destination:
-            for chunk in image1.chunks():
-                destination.write(chunk)
-
-        with open(os.path.join(images_dir, image2.name), 'wb+') as destination:
-            for chunk in image2.chunks():
-                destination.write(chunk)
-                
-        result = matcher.verify_faces(img1_path, img2_path)
-        os.remove(os.path.join(images_dir, image1.name))
-        os.remove(os.path.join(images_dir, image2.name))
-
-    except Exception as e:
-        return Response({"success": False, "error": str(e)}, status=400)
-
-    return Response(result)
 
 
 

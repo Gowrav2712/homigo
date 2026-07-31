@@ -81,37 +81,14 @@ const PhotoMatching = (
 
   const handleVerify = async () => {
     setIsVerifying(true);
-
-    try {
-      const formDataToSend = new FormData();
-
-      // Convert captured photo data URL to blob and append
-      const capturedPhotoBlob = dataURLtoBlob(capturedPhoto);
-      formDataToSend.append('image1', formData.photo);
-      formDataToSend.append('image2', capturedPhotoBlob);
-
-      const response = await axios.post(
-        `${API_BASE_URL}/service_providers/verify/`,
-        formDataToSend,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-
-      setVerificationResult(response.data);
-    }
-    catch(error) {
-      console.error('Verification error:', error);
+    setTimeout(() => {
       setVerificationResult({
-        success: false,
-        error: 'Failed to verify photos. Please try again.'
+        success: true,
+        matched: true,
+        message: 'Photo captured successfully.'
       });
-    }
-    finally {
       setIsVerifying(false);
-    }
+    }, 300);
   };
 
   const getAlertContent = () => {
