@@ -330,9 +330,8 @@ const MainPage = () => {
 
       for (const order of response.data) {
         if (order.status === "pending") pending.push(order);
-        else if (order.status === "accepted") {
-          const scheduledDate = new Date(order.scheduled_on);
-          if (scheduledDate > new Date()) accepted.push(order);
+        else if (order.status === "accepted" || order.status === "in_progress") {
+          accepted.push(order);
         }
       }
 
