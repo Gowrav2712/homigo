@@ -125,7 +125,7 @@ const SignUp = () => {
         validationErrors.mobile_number = 'Please enter a valid 10-digit mobile number';
       }
       if(formData.postal_code.length !==6 ){
-        validationErrors.postal_code = 'Please enter a valid 6-digit postal code';
+        validationErrors.postal_code = 'Please enter a valid 6-digit PIN code';
       }
       
       if (Object.keys(validationErrors).length > 0) {
@@ -318,7 +318,7 @@ const SignUp = () => {
         </Grid>
         <Grid item xs={12}>
           <TextField
-            label="Postal Code"
+            label="PIN Code"
             name="postal_code"
             value={formData.postal_code}
             onChange={handleChange}

@@ -121,7 +121,7 @@ const ServiceProviderProfile = () => {
     if(!profileData.street_address) newErrors.street_address = 'Street address is required';
     if(!profileData.city) newErrors.city = 'City is required';
     if(!profileData.state) newErrors.state = 'State is required';
-    if(!profileData.postal_code) newErrors.postal_code = 'Postal code is required';
+    if(!profileData.postal_code) newErrors.postal_code = 'PIN code is required';
     if(!profileData.gender) newErrors.gender = 'Gender is required';
     if(!profileData.main_service) newErrors.main_service = 'Main service is required';
 
@@ -453,7 +453,7 @@ const ServiceProviderProfile = () => {
                       <Grid size={12}>
                         <TextField
                           name="postal_code"
-                          label="Postal Code"
+                          label="PIN Code"
                           fullWidth
                           value={profileData.postal_code}
                           onChange={handleInputChange}

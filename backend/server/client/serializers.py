@@ -38,9 +38,9 @@ class ClientSerializer(serializers.ModelSerializer):
         return value
 
     def validate_postal_code(self, value):
-        """Ensure that postal code is exactly 6 digits."""
+        """Ensure that PIN code is exactly 6 digits."""
         if not value.isdigit() or len(value) != 6:
-            raise ValidationError("Postal code must be exactly 6 digits.")
+            raise ValidationError("PIN code must be exactly 6 digits.")
         return value
 
 

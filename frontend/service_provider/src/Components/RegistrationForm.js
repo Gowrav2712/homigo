@@ -479,7 +479,7 @@ const RegistrationForm = (
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
-              label="Postal Code"
+              label="PIN Code"
               name="postal_code"
               value={formData.postal_code}
               onChange={handleInputChange}

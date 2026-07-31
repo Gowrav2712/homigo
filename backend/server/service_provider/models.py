@@ -150,10 +150,10 @@ class ServiceProvider(models.Model):
         validators=[
             RegexValidator(
                 regex='^[0-9]{6}$',
-                message=_("Postal code must be 6 digits")
+                message=_("PIN code must be 6 digits")
             )
         ],
-        help_text=_("6-digit postal code")
+        help_text=_("6-digit PIN code")
     )
     latitude = models.DecimalField(
         max_digits=9,

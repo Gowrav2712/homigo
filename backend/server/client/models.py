@@ -65,10 +65,10 @@ class Client(models.Model):
         validators=[
             RegexValidator(
                 regex=r'^\d{6}$',  # Exactly 6 digits
-                message=_("Postal code must be exactly 6 digits")
+                message=_("PIN code must be exactly 6 digits")
             )
         ],
-        help_text=_("Client's postal code")
+        help_text=_("Client's PIN code")
     )
     latitude = models.DecimalField(
         max_digits=9,
