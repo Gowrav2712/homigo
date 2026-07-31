@@ -11,3 +11,6 @@ python manage.py migrate
 
 # Create or reset the admin superuser
 python manage.py create_admin
+
+# Seed 9 services and 27 sub-services with images
+python manage.py seed_services
