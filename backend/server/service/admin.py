@@ -112,8 +112,3 @@ class ServiceAdmin(admin.ModelAdmin):
             'justify-content: center;">No Image Uploaded</div>'
         )
     image_preview_large.short_description = _('Image Preview')
-
-    class Media:
-        css = {
-            'all': ('admin/css/custom_admin.css',)
-        }
