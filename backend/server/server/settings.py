@@ -114,7 +114,20 @@ WSGI_APPLICATION = 'server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-if os.getenv('DB_NAME'):
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
+
+if os.getenv('DATABASE_URL') and dj_database_url:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+elif os.getenv('DB_NAME'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
