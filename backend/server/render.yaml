@@ -5,7 +5,7 @@ services:
     plan: free
     rootDir: backend/server
     buildCommand: "./render_build.sh"
-    startCommand: "daphne -b 0.0.0.0 -p $PORT server.asgi:application"
+    startCommand: "python manage.py migrate && python manage.py create_admin && daphne -b 0.0.0.0 -p $PORT server.asgi:application"
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.12
