@@ -43,7 +43,7 @@ const AuthModal = ({ open, onClose }) => {
             top: '1rem',
             right: '1rem',
             zIndex: 2000,
-            color: view === 'signup' || view === 'login' ? 'text.primary' : 'background.paper',
+            p: 0
           }}
         >
           <CloseIcon />

@@ -144,33 +144,51 @@ const Theme = createTheme({
     MuiSvgIcon: {
       styleOverrides: {
         root: ({ theme }) => ({
-          '&[data-testid="CloseIcon"], &[data-testid="ArrowBackIcon"]': {
+          '&[data-testid="CloseIcon"]': {
+            cursor: 'pointer',
+            backgroundColor: '#FF3B30',
+            color: '#FFFFFF !important',
+            padding: '0.4rem',
+            borderRadius: '50%',
+            fontSize: '1.8rem !important',
+            width: '2.4rem',
+            height: '2.4rem',
+            boxShadow: '0 3px 10px rgba(255, 59, 48, 0.4)',
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              backgroundColor: '#D70015',
+              color: '#FFFFFF !important',
+              transform: 'rotate(90deg) scale(1.15)',
+              boxShadow: '0 5px 15px rgba(215, 0, 21, 0.6)'
+            }
+          },
+          '&[data-testid="ArrowBackIcon"]': {
             cursor: 'pointer',
             backgroundColor: theme.palette.background.muted,
             color: theme.palette.secondary.main,
             padding: '0.5rem',
             borderRadius: '50%',
-            fontSize: '1.2rem',
-            transition: 'all 0.2s ease-in-out'
-          },
-          '&[data-testid="CloseIcon"]:hover': {
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
-            transform: 'rotate(90deg)'
-          },
-          '&[data-testid="ArrowBackIcon"]:hover': {
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
-            transform: 'translateX(-5px)'
+            fontSize: '1.4rem',
+            width: '2.2rem',
+            height: '2.2rem',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              backgroundColor: theme.palette.background.paper,
+              color: theme.palette.text.primary,
+              transform: 'translateX(-5px)'
+            }
           },
           '.MuiAlert-root &[data-testid="CloseIcon"]': {
-            padding: 0,
-            backgroundColor: 'transparent',
-            color: 'inherit',
-            fontSize: '1.25rem',
-            transition: 'opacity 0.2s ease-in-out',
+            padding: '0.2rem',
+            backgroundColor: '#FF3B30',
+            color: '#FFFFFF !important',
+            fontSize: '1.3rem !important',
+            width: '1.8rem',
+            height: '1.8rem',
+            borderRadius: '50%',
             '&:hover': {
-              opacity: 0.7
+              backgroundColor: '#D70015',
+              transform: 'rotate(90deg)'
             }
           }
         })
