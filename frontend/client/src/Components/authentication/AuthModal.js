@@ -25,13 +25,17 @@ const AuthModal = ({ open, onClose }) => {
         data-view={view}
         sx={{
           position: 'relative',
-          width: { xs: '95%', sm: '90%', md: '80%' },
-          maxWidth: '1200px',
-          height: { xs: '92vh', sm: '90vh' },
+          width: { xs: '90%', sm: '85%', md: '80%' },
+          maxWidth: '1100px',
+          height: {
+            xs: view === 'welcome' || !view ? '380px' : '90vh',
+            sm: view === 'welcome' || !view ? '420px' : '85vh',
+            md: '750px'
+          },
           maxHeight: '800px',
-          borderRadius: '20px',
+          borderRadius: '24px',
           boxSizing: 'border-box',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 12px 35px rgba(0, 0, 0, 0.2)',
           overflow: 'hidden',
           bgcolor: 'background.paper',
         }}

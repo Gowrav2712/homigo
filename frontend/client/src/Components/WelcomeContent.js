@@ -30,13 +30,24 @@ const WelcomeContent = () => {
     >
       <Typography
         variant="h1"
-        sx={{ color: 'background.paper', mb: 2 }}
+        sx={{
+          color: 'background.paper',
+          mb: 1.5,
+          fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' },
+          textAlign: 'center'
+        }}
       >
         Homigo
       </Typography>
       <Typography
         variant="h5"
-        sx={{ color: 'background.paper', mb: 4 }}
+        sx={{
+          color: 'background.paper',
+          mb: 3,
+          fontSize: { xs: '1.05rem', sm: '1.25rem', md: '1.5rem' },
+          textAlign: 'center',
+          px: 1
+        }}
       >
         A Platform for On-Demand Local Home Services
       </Typography>
