@@ -7,10 +7,12 @@ import {
   Box, Typography, Paper
 } from '@mui/material';
 import RegistrationForm from "./RegistrationForm";
+import PhotoMatching from "./PhotoMatching";
 
 const RegistrationPage = () => {
   const {signUpEmail} = useWelcomeViewContext();
   const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState('1');
   const [mainServices, setMainServices] = useState([]);
   const [formData, setFormData] = useState({
     email: signUpEmail,
@@ -77,12 +79,20 @@ const RegistrationPage = () => {
       const formDataToSend = new FormData();
 
       Object.keys(formData).forEach(key => {
-        if(key === 'photo' && formData[key]) formDataToSend.append(key, formData[key]);
-        else if(key === 'latitude' || key === 'longitude') {
-          const value = parseFloat(formData[key]).toFixed(6);
-          formDataToSend.append(key, value);
+        if (key === 'photo' && formData[key]) {
+          formDataToSend.append(key, formData[key]);
+        } else if (key === 'latitude' || key === 'longitude') {
+          const parsed = parseFloat(formData[key]);
+          if (!isNaN(parsed)) {
+            formDataToSend.append(key, parsed.toFixed(6));
+          } else {
+            // Provide default coordinate if location was not captured
+            const defaultCoord = key === 'latitude' ? '28.613900' : '77.209000';
+            formDataToSend.append(key, defaultCoord);
+          }
+        } else if (formData[key] !== null && formData[key] !== undefined) {
+          formDataToSend.append(key, formData[key]);
         }
-        else formDataToSend.append(key, formData[key]);
       });
 
       const response = await axios.post(
@@ -95,20 +105,43 @@ const RegistrationPage = () => {
         }
       );
 
-      if(response.data.status) {
+      if (response.data.status) {
         localStorage.setItem('accessToken', response.data.data.access_token);
         localStorage.setItem('refreshToken', response.data.data.refresh_token);
         localStorage.setItem('providerId', response.data.data.provider_id);
         localStorage.setItem('providerName', response.data.data.name);
         localStorage.setItem('providerEmail', response.data.data.email);
-        localStorage.setItem('mainServiceId', response.data.data.service_id);
+        localStorage.setItem('mainServiceId', response.data.data.service_id || '');
         navigate('/main');
+      } else {
+        const errData = response.data;
+        if (errData?.errors && typeof errData.errors === 'object') {
+          const fieldErrors = Object.entries(errData.errors)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+            .join(' | ');
+          setError(fieldErrors || errData.message || 'Registration failed.');
+        } else {
+          setError(errData.message || 'Registration failed. Please check your details.');
+        }
       }
-      else setError(response.data.message);
     }
     catch(error) {
       console.error('Registration error:', error);
-      setError(error.response?.data?.message || 'Registration failed. Please try again.');
+      // Extract specific field-level errors from backend
+      const errData = error.response?.data;
+      if (errData?.errors && typeof errData.errors === 'object') {
+        const fieldErrors = Object.entries(errData.errors)
+          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+          .join('\n');
+        setError(fieldErrors || 'Registration failed. Please try again.');
+      } else {
+        setError(
+          errData?.message ||
+          errData?.detail ||
+          error.response?.data?.errors?.non_field_errors?.[0] ||
+          'Registration failed. Please try again.'
+        );
+      }
     }
     finally {
       setIsSubmitting(false);
@@ -251,15 +284,28 @@ const RegistrationPage = () => {
           </Box>
 
           <Paper elevation={4} sx={{width: { xs: '100%', sm: '85%', md: '65%', lg: '50%' }, p: { xs: 2.5, sm: 4 }, borderRadius: 2}}>
-            <RegistrationForm
-              formData={formData}
-              setFormData={setFormData}
-              handleFinalSubmit={handleFinalSubmit}
-              isSubmitting={isSubmitting}
-              error={error}
-              setError={setError}
-              mainServices={mainServices}
-            />
+            {currentStep === '1' ? (
+              <RegistrationForm
+                formData={formData}
+                setFormData={setFormData}
+                handleNextStep={() => setCurrentStep('2')}
+                handleFinalSubmit={handleFinalSubmit}
+                isSubmitting={isSubmitting}
+                error={error}
+                setError={setError}
+                mainServices={mainServices}
+              />
+            ) : (
+              <PhotoMatching
+                formData={formData}
+                setFormData={setFormData}
+                setCurrentStep={setCurrentStep}
+                handleFinalSubmit={handleFinalSubmit}
+                isSubmitting={isSubmitting}
+                error={error}
+                setError={setError}
+              />
+            )}
           </Paper>
         </Box>
       </Box>

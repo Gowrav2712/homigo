@@ -14,10 +14,10 @@ from service.models import Service
 from django.contrib.auth.hashers import make_password
 
 def validate_image_size(value):
-    """Validate that the image size is less than 2MB."""
+    """Validate that the image size is less than 10MB."""
     filesize = value.size
-    if filesize > 2 * 1024 * 1024:
-        raise ValidationError(_("Maximum file size allowed is 2MB"))
+    if filesize > 10 * 1024 * 1024:
+        raise ValidationError(_("Maximum file size allowed is 10MB"))
 
 class ServiceProvider(models.Model):
     """Service providers offering various services on the platform"""

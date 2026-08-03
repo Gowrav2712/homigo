@@ -260,13 +260,19 @@ class SignupView(APIView):
                     'refresh_token': str(refresh),
                     'provider_id': str(provider.id),
                     'email': provider.email,
-                    'name': provider.full_name
+                    'name': provider.full_name,
+                    'service_id': str(provider.main_service.id) if provider.main_service else None
                 }
             }, status=status.HTTP_201_CREATED)
             
+        error_details = []
+        for field, errs in serializer.errors.items():
+            error_details.append(f"{field}: {', '.join(errs) if isinstance(errs, list) else errs}")
+        error_msg = ' | '.join(error_details) if error_details else 'Registration failed'
+
         return Response({
             'status': False,
-            'message': 'Registration failed',
+            'message': error_msg,
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 

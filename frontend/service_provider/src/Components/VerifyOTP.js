@@ -11,7 +11,7 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
   const [generatedOTP, setGeneratedOTP] = useState('');
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(120);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
 
@@ -108,7 +108,7 @@ const VerifyOTP = () => {
   const handleResendOTP = async () => {
     const newOTP = generateOTP();
     await sendOTP(newOTP);
-    setTimer(30);
+    setTimer(120);
     setIsResendDisabled(true);
     setOtpValues(['', '', '', '', '', '']);
   };

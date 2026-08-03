@@ -141,6 +141,10 @@ class ServiceProviderCreateUpdateSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password', None)
         provider_services_data = validated_data.pop('provider_services', [])
 
+        password = validated_data.get('password')
+        if password:
+            validated_data['password'] = make_password(password)
+
         provider = ServiceProvider.objects.create(**validated_data)
 
         for service_data in provider_services_data:

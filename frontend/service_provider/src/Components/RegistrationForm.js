@@ -6,7 +6,7 @@ import Grid from "@mui/material/Grid2";
 import {requestAndStoreLocation} from "../utils/LocationHandler";
 
 const RegistrationForm = (
-  {formData, setFormData, handleFinalSubmit, isSubmitting, error, setError, mainServices}
+  {formData, setFormData, handleNextStep, handleFinalSubmit, isSubmitting, error, setError, mainServices}
 ) => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -181,7 +181,11 @@ const RegistrationForm = (
 
     setErrors(newErrors);
     if(Object.keys(newErrors).length === 0) {
-      handleFinalSubmit();
+      if(handleNextStep) {
+        handleNextStep();
+      } else {
+        handleFinalSubmit();
+      }
     }
   };
 
@@ -556,6 +560,8 @@ const RegistrationForm = (
                   <CircularProgress size={24} color="inherit" />
                   <Typography ml={1}>Registering...</Typography>
                 </>
+              ) : handleNextStep ? (
+                'Next: Face Verification'
               ) : (
                 'Register'
               )}
