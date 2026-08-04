@@ -36,19 +36,42 @@ class SignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+from security.utils import (
+    get_client_ip, get_failed_attempts, increment_failed_attempts,
+    reset_failed_attempts, is_rate_limited, set_rate_limit, create_security_event
+)
+from django.conf import settings
+
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     """
-    View for user login. Returns authentication tokens and user details.
+    View for user login with brute-force protection.
     """
     def post(self, request):
+        ip = get_client_ip(request)
+
+        # Gate 1: Already rate-limited?
+        if is_rate_limited(ip):
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Too many failed attempts. Try again in 15 minutes.',
+                    'error': 'Too many failed attempts. Try again in 15 minutes.',
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={'Retry-After': '900'},
+            )
+
         serializer = LoginSerializer(data=request.data)
         
         if serializer.is_valid():
             user = serializer.validated_data['user']
+            reset_failed_attempts(ip, request.data.get('email', ''))
             refresh = RefreshToken.for_user(user)
             
             response_data = {
+                'status': True,
+                'message': 'Login successful',
                 'tokens': {
                     'access_token': str(refresh.access_token),
                     'refresh_token': str(refresh),
@@ -61,6 +84,25 @@ class LoginView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
+        # Failed login — track attempt
+        username = request.data.get('email', '')
+        increment_failed_attempts(ip, username)
+        count = get_failed_attempts(ip, username)
+
+        if count >= getattr(settings, 'LOGIN_MAX_ATTEMPTS', 5):
+            user_agent = request.META.get('HTTP_USER_AGENT', '')
+            create_security_event(ip, username, user_agent, count)
+            set_rate_limit(ip)
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Too many failed attempts. Try again in 15 minutes.',
+                    'error': 'Too many failed attempts. Try again in 15 minutes.',
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={'Retry-After': '900'},
+            )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
