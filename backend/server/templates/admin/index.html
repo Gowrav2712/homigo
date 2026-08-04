@@ -1,0 +1,72 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+
+{# ── Security Alerts Panel ─────────────────────────────────────────────── #}
+{% if security_unresolved_count > 0 %}
+<div style="background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+            border-left: 5px solid #e53935;
+            padding: 20px 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(229, 57, 53, 0.12);">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h2 style="margin: 0 0 6px; color: #c62828; font-size: 18px; font-weight: 700;">
+        &#128274; Security Alerts
+        <span style="background: #e53935;
+                     color: white;
+                     border-radius: 12px;
+                     padding: 3px 12px;
+                     font-size: 13px;
+                     font-weight: 600;
+                     margin-left: 8px;
+                     vertical-align: middle;">
+          {{ security_unresolved_count }} unresolved
+        </span>
+      </h2>
+      {% if security_latest_event %}
+      <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.5;">
+        Latest:
+        <strong style="color: #333;">{{ security_latest_event.ip_address }}</strong>
+        {% if security_latest_event.city %}&mdash; {{ security_latest_event.city }}{% endif %}
+        &middot; Attempted: <strong style="color: #333;">{{ security_latest_event.attempted_username }}</strong>
+        &middot; {{ security_latest_event.timestamp|timesince }} ago
+        &middot; {{ security_latest_event.failed_attempt_count }} attempts
+      </p>
+      {% endif %}
+    </div>
+    <a href="{% url 'admin:security_securityevent_changelist' %}"
+       style="background: #e53935;
+              color: white;
+              text-decoration: none;
+              padding: 10px 22px;
+              border-radius: 6px;
+              font-weight: 600;
+              font-size: 14px;
+              white-space: nowrap;
+              box-shadow: 0 2px 6px rgba(229, 57, 53, 0.3);
+              transition: background 0.2s;">
+      View All Security Events &rarr;
+    </a>
+  </div>
+</div>
+{% else %}
+<div style="background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+            border-left: 5px solid #43a047;
+            padding: 16px 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;">
+  <span style="color: #2e7d32; font-weight: 700; font-size: 15px;">&#9989; All Clear</span>
+  <span style="color: #555; margin-left: 8px; font-size: 14px;">No active security alerts.</span>
+  <a href="{% url 'admin:security_securityevent_changelist' %}"
+     style="color: #43a047; margin-left: 16px; font-size: 13px; text-decoration: underline;">
+    View history
+  </a>
+</div>
+{% endif %}
+{# ── End Security Alerts Panel ─────────────────────────────────────────── #}
+
+{{ block.super }}
+{% endblock %}

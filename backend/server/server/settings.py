@@ -69,8 +69,10 @@ INSTALLED_APPS = [
     'orders',
     'chat',
     'channels',
-    'notifications'
+    'notifications',
+    'security',
 ]
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -95,7 +97,7 @@ ROOT_URLCONF = 'server.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -231,3 +233,16 @@ CHANNEL_LAYERS = {
     }
 }
 
+# ── Security / Brute-force Protection ──────────────────────────────────────
+SECURITY_TRUSTED_PROXY    = False          # Set True only if behind Nginx/Render trusted proxy
+LOGIN_MAX_ATTEMPTS        = 5              # Failures before SecurityEvent is created
+LOGIN_ATTEMPT_WINDOW      = 600            # 10-minute sliding window (seconds)
+LOGIN_RATE_LIMIT_DURATION = 900            # 15-minute lockout duration (seconds)
+SECURITY_ALERT_EMAIL      = 'homigo24@gmail.com'  # Alert destination (uses existing SMTP config)
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "security_cache_table",
+    }
+}
