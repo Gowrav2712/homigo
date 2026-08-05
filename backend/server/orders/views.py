@@ -17,7 +17,11 @@ class OrderCreateListView(APIView):
         client_id = request.query_params.get('client_id')
         print(client_id)
         if client_id:
-            orders = Orders.objects.filter(user_id=client_id)
+            orders = Orders.objects.filter(user_id=client_id).select_related(
+                'provider', 'service', 'user'
+            ).prefetch_related(
+                'items__provider_service__sub_service', 'status_history'
+            )
             serializer = OrderSerializer(orders, many=True)
             return Response(serializer.data)
             
@@ -25,7 +29,11 @@ class OrderCreateListView(APIView):
         provider_id = request.query_params.get('provider_id')
         print(provider_id)
         if provider_id:
-            orders = Orders.objects.filter(provider_id=provider_id)
+            orders = Orders.objects.filter(provider_id=provider_id).select_related(
+                'provider', 'service', 'user'
+            ).prefetch_related(
+                'items__provider_service__sub_service', 'status_history'
+            )
             serializer = OrderSerializer(orders, many=True)
             return Response(serializer.data)
         

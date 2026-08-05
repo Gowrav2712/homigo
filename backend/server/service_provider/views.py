@@ -74,7 +74,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 
 class ServiceProviderViewSet(viewsets.ModelViewSet):
-    queryset = ServiceProvider.objects.all()
+    queryset = ServiceProvider.objects.all().select_related('main_service')
     pagination_class = CustomPagination
     lookup_field = 'id'
 

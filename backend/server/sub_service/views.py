@@ -8,7 +8,7 @@ class SubServiceListView(generics.ListAPIView):
     """
     API view to list all subservices
     """
-    queryset = SubService.objects.all()
+    queryset = SubService.objects.all().select_related('main_service')
     serializer_class = SubServiceSerializer
 
     def list(self, request, *args, **kwargs):

@@ -39,29 +39,35 @@ class SendResetCodeView(APIView):
             'expires_at': time.time() + 600  # Valid for 10 minutes
         }
 
-        # Send email via Gmail SMTP
-        try:
-            subject = "Homigo - Password Reset Verification Code"
-            message = (
-                f"Hello,\n\n"
-                f"Your verification code to reset your Homigo account password is:\n\n"
-                f"   {otp_code}\n\n"
-                f"This code will expire in 10 minutes.\n\n"
-                f"If you did not request a password reset, please ignore this email.\n\n"
-                f"Best regards,\n"
-                f"Homigo Team"
-            )
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'Homigo <homigo24@gmail.com>'),
-                recipient_list=[email],
-                fail_silently=False
-            )
-            return Response({'message': 'Verification code sent to your registered Gmail address.'}, status=status.HTTP_200_OK)
-        except Exception as e:
-            print("Email sending error:", e)
-            return Response({'error': f'Failed to send verification email. Details: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Send email asynchronously via background thread for instant API response
+        subject = "Homigo - Password Reset Verification Code"
+        message = (
+            f"Hello,\n\n"
+            f"Your verification code to reset your Homigo account password is:\n\n"
+            f"   {otp_code}\n\n"
+            f"This code will expire in 10 minutes.\n\n"
+            f"If you did not request a password reset, please ignore this email.\n\n"
+            f"Best regards,\n"
+            f"Homigo Team"
+        )
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Homigo <homigo24@gmail.com>')
+        
+        def _send_email():
+            try:
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=from_email,
+                    recipient_list=[email],
+                    fail_silently=True
+                )
+            except Exception as e:
+                print("Email sending error:", e)
+
+        import threading
+        threading.Thread(target=_send_email, daemon=True).start()
+
+        return Response({'message': 'Verification code sent to your registered Gmail address.'}, status=status.HTTP_200_OK)
 
 
 class VerifyResetCodeView(APIView):
