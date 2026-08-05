@@ -4,6 +4,14 @@ from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.signals import user_login_failed, user_logged_in
+from django.db import transaction
+
+# Security imports
+from security.utils import (
+    get_client_ip, get_failed_attempts, increment_failed_attempts,
+    reset_failed_attempts, is_rate_limited, set_rate_limit, create_security_event
+)
 
 # Third-party imports
 import os
@@ -239,72 +247,7 @@ class ServiceProviderViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             
-class SignupView(APIView):
-    """View for service provider signup."""
-    permission_classes = [AllowAny]
-    
-    def post(self, request):
-        # print(request.data)
-        serializer = ServiceProviderCreateUpdateSerializer(data=request.data)
-        if serializer.is_valid():
-            provider = serializer.save()
-            
-            # Generate tokens
-            refresh = RefreshToken.for_user(provider)
-            
-            return Response({
-                'status': True,
-                'message': 'Service provider registered successfully',
-                'data': {
-                    'access_token': str(refresh.access_token),
-                    'refresh_token': str(refresh),
-                    'provider_id': str(provider.id),
-                    'email': provider.email,
-                    'name': provider.full_name,
-                    'service_id': str(provider.main_service.id) if provider.main_service else None
-                }
-            }, status=status.HTTP_201_CREATED)
-            
-        error_details = []
-        for field, errs in serializer.errors.items():
-            error_details.append(f"{field}: {', '.join(errs) if isinstance(errs, list) else errs}")
-        error_msg = ' | '.join(error_details) if error_details else 'Registration failed'
 
-        return Response({
-            'status': False,
-            'message': error_msg,
-            'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-class LoginView(APIView):
-    """View for service provider login."""
-    permission_classes = [AllowAny]
-    
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            provider = serializer.validated_data['user']
-            refresh = RefreshToken.for_user(provider)
-            
-            return Response({
-                'status': True,
-                'message': 'Login successful',
-                'data': {
-                    'access_token': str(refresh.access_token),
-                    'refresh_token': str(refresh),
-                    'provider_id': str(provider.id),
-                    'email': provider.email,
-                    'name': provider.full_name,
-                    'service_id':provider.main_service.id
-                }
-            }, status=status.HTTP_200_OK)
-            
-        return Response({
-            'status': False,
-            'message': 'Login failed',
-            'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
 
         
         
@@ -389,12 +332,28 @@ class SubServiceProvidersViewSet(ReadOnlyModelViewSet):
 
 
 class LoginView(APIView):
+    """Service provider login with brute-force protection."""
     permission_classes = [AllowAny]
 
     def post(self, request):
+        ip = get_client_ip(request)
+
+        if is_rate_limited(ip):
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Too many failed attempts. Try again in 15 minutes.',
+                    'error': 'Too many failed attempts. Try again in 15 minutes.',
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={'Retry-After': '900'},
+            )
+
         serializer = LoginSerializer(data=request.data)
+
         if serializer.is_valid():
             provider = serializer.validated_data['user']
+            user_logged_in.send(sender=provider.__class__, request=request, user=provider)
             refresh = RefreshToken.for_user(provider)
             return Response({
                 'status': True,
@@ -408,6 +367,14 @@ class LoginView(APIView):
                     'service_id': str(provider.main_service_id) if provider.main_service_id else None
                 }
             }, status=status.HTTP_200_OK)
+
+        # Failed login — fire signal
+        user_login_failed.send(
+            sender=self.__class__,
+            credentials={'email': request.data.get('email', '')},
+            request=request,
+        )
+
         return Response({
             'status': False,
             'errors': serializer.errors

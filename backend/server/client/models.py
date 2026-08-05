@@ -13,6 +13,8 @@ class Client(models.Model):
     """
     Represents a client or user in the platform who requests services.
     """
+    objects = models.Manager()
+    DoesNotExist = models.ObjectDoesNotExist
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -91,13 +93,13 @@ class Client(models.Model):
         verbose_name = _("Client")
         verbose_name_plural = _("Clients")
 
-    def __str__(self):
-        return self.name
+    def __str__(self) -> str:
+        return str(self.name)
 
     def save(self, *args, **kwargs):
         """Hash password before saving."""
         if not self.pk:  # Only hash if password is new (on initial save)
-            self.password = make_password(self.password)
+            self.password = str(make_password(self.password))
         super().save(*args, **kwargs)
 
     def get_full_address(self):

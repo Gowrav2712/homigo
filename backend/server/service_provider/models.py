@@ -21,6 +21,7 @@ def validate_image_size(value):
 
 class ServiceProvider(models.Model):
     """Service providers offering various services on the platform"""
+    objects = models.Manager()
     GENDER_CHOICES = [
         ('M', _('Male')),
         ('F', _('Female')),
@@ -212,7 +213,7 @@ class ServiceProvider(models.Model):
             (not self._state.adding and 
             self.password != ServiceProvider.objects.get(pk=self.pk).password)
         ):
-            self.password = make_password(self.password)
+            self.password = str(make_password(self.password))
         super().save(*args, **kwargs)
 
     def clean(self):
@@ -229,6 +230,8 @@ class ServiceProvider(models.Model):
 
 class ProviderService(models.Model):
     """Provider's services with custom pricing"""
+    objects = models.Manager()
+    DoesNotExist = models.ObjectDoesNotExist
     provider = models.ForeignKey(
         ServiceProvider,
         on_delete=models.CASCADE,

@@ -36,19 +36,38 @@ class SignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+from django.contrib.auth.signals import user_login_failed, user_logged_in
+from security.utils import get_client_ip, is_rate_limited
+
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     """
-    View for user login. Returns authentication tokens and user details.
+    View for user login with brute-force protection.
     """
     def post(self, request):
+        ip = get_client_ip(request)
+
+        if is_rate_limited(ip):
+            return Response(
+                {
+                    'status': False,
+                    'message': 'Too many failed attempts. Try again in 15 minutes.',
+                    'error': 'Too many failed attempts. Try again in 15 minutes.',
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={'Retry-After': '900'},
+            )
+
         serializer = LoginSerializer(data=request.data)
         
         if serializer.is_valid():
             user = serializer.validated_data['user']
+            user_logged_in.send(sender=user.__class__, request=request, user=user)
             refresh = RefreshToken.for_user(user)
             
             response_data = {
+                'status': True,
+                'message': 'Login successful',
                 'tokens': {
                     'access_token': str(refresh.access_token),
                     'refresh_token': str(refresh),
@@ -61,6 +80,13 @@ class LoginView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
+        # Failed login — fire signal
+        user_login_failed.send(
+            sender=self.__class__,
+            credentials={'email': request.data.get('email', '')},
+            request=request,
+        )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
