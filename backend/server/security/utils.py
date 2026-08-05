@@ -59,8 +59,12 @@ def _make_block_key(ip: str) -> str:
 
 def get_failed_attempts(ip: str, username: str = '') -> int:
     """Return the current number of failed attempts for this IP + username."""
-    key = _make_attempt_key(ip, username)
-    return cache.get(key, 0)
+    try:
+        key = _make_attempt_key(ip, username)
+        return cache.get(key, 0) or 0
+    except Exception as e:
+        logger.warning(f"Cache get_failed_attempts failed: {e}")
+        return 0
 
 
 def increment_failed_attempts(ip: str, username: str = '') -> None:
@@ -69,30 +73,42 @@ def increment_failed_attempts(ip: str, username: str = '') -> None:
     The key has a TTL of LOGIN_ATTEMPT_WINDOW (default 10 minutes).
     Each new failure refreshes the TTL so the window slides.
     """
-    key = _make_attempt_key(ip, username)
-    window = getattr(settings, 'LOGIN_ATTEMPT_WINDOW', 600)
-
-    current = cache.get(key, 0)
-    cache.set(key, current + 1, timeout=window)
+    try:
+        key = _make_attempt_key(ip, username)
+        window = getattr(settings, 'LOGIN_ATTEMPT_WINDOW', 600)
+        current = cache.get(key, 0) or 0
+        cache.set(key, current + 1, timeout=window)
+    except Exception as e:
+        logger.warning(f"Cache increment_failed_attempts failed: {e}")
 
 
 def reset_failed_attempts(ip: str, username: str = '') -> None:
     """Delete the attempt counter on successful login."""
-    key = _make_attempt_key(ip, username)
-    cache.delete(key)
+    try:
+        key = _make_attempt_key(ip, username)
+        cache.delete(key)
+    except Exception as e:
+        logger.warning(f"Cache reset_failed_attempts failed: {e}")
 
 
 # ─── Rate Limiting ────────────────────────────────────────────────────────────
 
 def is_rate_limited(ip: str) -> bool:
     """Return True if this IP is currently blocked."""
-    return cache.get(_make_block_key(ip)) is not None
+    try:
+        return cache.get(_make_block_key(ip)) is not None
+    except Exception as e:
+        logger.warning(f"Cache is_rate_limited failed: {e}")
+        return False
 
 
 def set_rate_limit(ip: str) -> None:
     """Block this IP for LOGIN_RATE_LIMIT_DURATION (default 15 minutes)."""
-    duration = getattr(settings, 'LOGIN_RATE_LIMIT_DURATION', 900)
-    cache.set(_make_block_key(ip), True, timeout=duration)
+    try:
+        duration = getattr(settings, 'LOGIN_RATE_LIMIT_DURATION', 900)
+        cache.set(_make_block_key(ip), True, timeout=duration)
+    except Exception as e:
+        logger.warning(f"Cache set_rate_limit failed: {e}")
 
 
 # ─── Email Alert ──────────────────────────────────────────────────────────────
