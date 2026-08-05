@@ -233,11 +233,12 @@ CHANNEL_LAYERS = {
 }
 
 # ── Security / Brute-force Protection ──────────────────────────────────────
-SECURITY_TRUSTED_PROXY    = False          # Set True only if behind Nginx/Render trusted proxy
+SECURITY_TRUSTED_PROXY    = False          # Set True when deployed behind proxy (Nginx/Render/Cloudflare)
 LOGIN_MAX_ATTEMPTS        = 5              # Failures before SecurityEvent is created
 LOGIN_ATTEMPT_WINDOW      = 600            # 10-minute sliding window (seconds)
 LOGIN_RATE_LIMIT_DURATION = 900            # 15-minute lockout duration (seconds)
 SECURITY_ALERT_EMAIL      = 'homigo24@gmail.com'  # Alert destination (uses existing SMTP config)
+SECURITY_DEV_MOCK_IP      = None           # Optional: Set a public IP (e.g. '8.8.8.8') to test city lookup during local dev
 
 if DEBUG:
     CACHES = {

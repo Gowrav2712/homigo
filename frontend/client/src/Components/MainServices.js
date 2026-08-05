@@ -104,14 +104,14 @@ const MainServices = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 8 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 4, md: 8 }, px: { xs: 1.5, sm: 3 } }}>
       <Typography 
         variant="h1" 
         component="h1" 
         gutterBottom
         sx={{
-          mb: 8,
-          fontSize: { xs: '2.5rem', md: '3.5rem' },
+          mb: { xs: 4, md: 8 },
+          fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3.5rem' },
           fontWeight: 700,
           textAlign: 'center',
           background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
@@ -123,15 +123,15 @@ const MainServices = () => {
         Our Services
       </Typography>
 
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 1.5, sm: 3, md: 4 }}>
         {services.map((service, index) => (
-          <Grid item xs={12} sm={6} md={4} key={service.id}>
+          <Grid item xs={6} sm={6} md={4} key={service.id}>
             <MotionCard
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ 
-                duration: 0.6, 
-                delay: index * 0.1,
+                duration: 0.5, 
+                delay: index * 0.05,
                 ease: [0.4, 0, 0.2, 1]
               }}
               onClick={() => handleCardClick(service.id)}
@@ -139,15 +139,15 @@ const MainServices = () => {
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: 3,
+                borderRadius: { xs: 2.5, md: 3 },
                 position: 'relative',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                 transition: 'all 0.3s ease-in-out',
                 '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+                  transform: 'translateY(-6px)',
+                  boxShadow: '0 10px 28px rgba(0,0,0,0.12)',
                   '& .MuiCardMedia-root': {
                     transform: 'scale(1.05)',
                   },
@@ -156,24 +156,27 @@ const MainServices = () => {
             >
               <CardMedia
                 component="img"
-                height="220"
                 image={getServiceImage(service.name, service.image_base64)}
                 alt={service.name}
                 onError={(e) => {
                   e.target.src = defaultServiceImages[service.name] || 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=600&q=80';
                 }}
                 sx={{
+                  height: { xs: 130, sm: 180, md: 220 },
                   transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                   objectFit: 'cover'
                 }}
               />
 
-
               <CardContent 
                 sx={{ 
                   flexGrow: 1, 
-                  p: 3,
-                  background: 'linear-gradient(to bottom, rgba(255,255,255,0.95), #ffffff)'
+                  p: { xs: 1.5, sm: 2.5, md: 3 },
+                  '&:last-child': { pb: { xs: 1.5, sm: 2.5, md: 3 } },
+                  background: 'linear-gradient(to bottom, rgba(255,255,255,0.95), #ffffff)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
                 }}
               >
                 <Typography
@@ -182,10 +185,14 @@ const MainServices = () => {
                   component="h2"
                   sx={{
                     fontWeight: 700,
-                    mb: 2.5,
+                    mb: { xs: 1, sm: 2 },
                     color: theme.palette.text.primary,
-                    fontSize: '1.5rem',
-                    lineHeight: 1.2,
+                    fontSize: { xs: '0.95rem', sm: '1.25rem', md: '1.4rem' },
+                    lineHeight: 1.25,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
                   }}
                 >
                   {service.name}
@@ -194,21 +201,23 @@ const MainServices = () => {
                 <Box
                   sx={{
                     display: 'flex',
-                    gap: 1.5,
+                    gap: { xs: 0.5, sm: 1 },
                     flexWrap: 'wrap',
+                    mt: 'auto'
                   }}
                 >
                   <Chip
-                    icon={<CategoryIcon sx={{ fontSize: '1.1rem' }} />}
+                    icon={<CategoryIcon sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }} />}
                     label={`${service.sub_services_count} Sub-services`}
                     color="primary"
                     variant="outlined"
-                    size="medium"
                     sx={{
-                      borderRadius: '8px',
+                      height: { xs: 24, sm: 32 },
+                      fontSize: { xs: '0.68rem', sm: '0.8rem' },
+                      borderRadius: '6px',
                       '& .MuiChip-label': {
-                        px: 1,
-                        fontWeight: 500,
+                        px: { xs: 0.5, sm: 1 },
+                        fontWeight: 600,
                       },
                       borderColor: 'rgba(0,0,0,0.12)',
                       transition: 'all 0.2s ease',
@@ -220,16 +229,17 @@ const MainServices = () => {
                     }}
                   />
                   <Chip
-                    icon={<GroupsIcon sx={{ fontSize: '1.1rem' }} />}
+                    icon={<GroupsIcon sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }} />}
                     label={`${service.providers_count} Providers`}
                     color="secondary"
                     variant="outlined"
-                    size="medium"
                     sx={{
-                      borderRadius: '8px',
+                      height: { xs: 24, sm: 32 },
+                      fontSize: { xs: '0.68rem', sm: '0.8rem' },
+                      borderRadius: '6px',
                       '& .MuiChip-label': {
-                        px: 1,
-                        fontWeight: 500,
+                        px: { xs: 0.5, sm: 1 },
+                        fontWeight: 600,
                       },
                       borderColor: 'rgba(0,0,0,0.12)',
                       transition: 'all 0.2s ease',

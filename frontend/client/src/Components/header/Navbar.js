@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { API_BASE_URL } from "../../config";
 import { useNavigate } from "react-router-dom";
 import MapIcon from "@mui/icons-material/Map";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+import { handleLocationAccess } from "../../utils/locationhandler";
 import {
   AppBar,
   Toolbar,
@@ -234,8 +236,147 @@ const Navbar = () => {
     setLocationAnchorEl(event.currentTarget);
   };
 
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const [locationSearchResults, setLocationSearchResults] = useState([]);
+
   const handleLocationMenuClose = () => {
     setLocationAnchorEl(null);
+    setLocationSearchQuery("");
+    setLocationSearchResults([]);
+  };
+
+  const handleLocationSearch = async (query) => {
+    setLocationSearchQuery(query);
+    if (!query || query.trim().length < 2) {
+      setLocationSearchResults([]);
+      return;
+    }
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&countrycodes=in&addressdetails=1`
+      );
+      const data = await response.json();
+      setLocationSearchResults(data || []);
+    } catch (err) {
+      console.error("Location search error:", err);
+    }
+  };
+
+  const handleSelectLocationResult = async (result) => {
+    const lat = parseFloat(result.lat);
+    const lon = parseFloat(result.lon);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`
+      );
+      const data = await response.json();
+      let formattedAddress = data.display_name;
+      if (data?.address) {
+        const addr = data.address;
+        const place = addr.village || addr.town || addr.suburb || addr.city || addr.municipality || addr.county || '';
+        const district = addr.state_district || addr.county || '';
+        const state = addr.state || '';
+        const postcode = addr.postcode || '';
+        const parts = [place, district, state, postcode].filter(Boolean);
+        if (parts.length > 0) formattedAddress = parts.join(', ');
+      }
+      const locationData = {
+        latitude: lat,
+        longitude: lon,
+        address: formattedAddress,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem("userLocation", JSON.stringify(locationData));
+      setLocation(locationData);
+    } catch {
+      const locationData = {
+        latitude: lat,
+        longitude: lon,
+        address: result.display_name,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem("userLocation", JSON.stringify(locationData));
+      setLocation(locationData);
+    }
+    setLocationSearchQuery("");
+    setLocationSearchResults([]);
+  };
+
+  const handleDetectCurrentLocation = () => {
+    setIsDetectingLocation(true);
+
+    if (!navigator.geolocation) {
+      handleLocationAccess().then((locationData) => {
+        if (locationData) {
+          setLocation(locationData);
+          localStorage.setItem("userLocation", JSON.stringify(locationData));
+        }
+        setIsDetectingLocation(false);
+      });
+      return;
+    }
+
+    // Force a completely fresh GPS reading — no cache
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&zoom=18`
+          );
+          const data = await response.json();
+          let formattedAddress = data.display_name;
+          if (data?.address) {
+            const addr = data.address;
+            const place = addr.village || addr.town || addr.suburb || addr.city || addr.municipality || '';
+            const district = addr.state_district || addr.county || '';
+            const state = addr.state || '';
+            const postcode = addr.postcode || '';
+            const parts = [place, district, state, postcode].filter(Boolean);
+            if (parts.length > 0) formattedAddress = parts.join(', ');
+          }
+
+          // If accuracy is poor (> 2km), append a hint
+          if (accuracy > 2000) {
+            formattedAddress += ` (approx ~${Math.round(accuracy / 1000)}km)`;
+          }
+
+          const locationData = {
+            latitude,
+            longitude,
+            address: formattedAddress,
+            accuracy: Math.round(accuracy),
+            timestamp: new Date().toISOString()
+          };
+          localStorage.setItem("userLocation", JSON.stringify(locationData));
+          setLocation(locationData);
+        } catch {
+          const locationData = {
+            latitude,
+            longitude,
+            address: `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`,
+            timestamp: new Date().toISOString()
+          };
+          localStorage.setItem("userLocation", JSON.stringify(locationData));
+          setLocation(locationData);
+        }
+        setIsDetectingLocation(false);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        setIsDetectingLocation(false);
+        // Fallback
+        handleLocationAccess().then((locationData) => {
+          if (locationData) {
+            setLocation(locationData);
+            localStorage.setItem("userLocation", JSON.stringify(locationData));
+          }
+        });
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
   };
 
   const handleOpenLocationPicker = () => {
@@ -695,45 +836,150 @@ const Navbar = () => {
         onClose={handleLocationMenuClose}
         TransitionComponent={Fade}
         PaperProps={{
-          elevation: 2,
-          sx: { mt: 1.5, maxWidth: "90vw", width: "360px", padding: "16px", borderRadius: "8px" },
+          elevation: 3,
+          sx: { mt: 1.5, maxWidth: "90vw", width: "360px", padding: "16px", borderRadius: "12px" },
         }}
       >
         <Box sx={{ p: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "grey.700", mb: 1 }}>
-            <LocationOnIcon color="primary" fontSize="small" />
-            <Typography variant="subtitle2">Current Location</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "grey.700" }}>
+              <LocationOnIcon color="primary" fontSize="small" />
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Current Location</Typography>
+            </Box>
           </Box>
-          <Typography variant="body1" sx={{ color: "grey.800", fontWeight: 500, mb: 2, wordBreak: "break-word" }}>
-            {location?.address}
+
+          <Typography variant="body1" sx={{ color: "grey.800", fontWeight: 500, mb: 1.5, wordBreak: "break-word" }}>
+            {location?.address || "No location selected"}
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              display: "block",
-              color: "grey.600",
-              mb: 2,
-              borderTop: 1,
-              borderColor: "grey.200",
-              pt: 2,
-            }}
-          >
-            Last updated: {new Date(location?.timestamp).toLocaleString()}
-          </Typography>
-          <Box sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
-            <Button
-              startIcon={<MapIcon />}
-              onClick={() => { handleOpenLocationPicker(); handleLocationMenuClose(); }}
+
+          {location?.timestamp && (
+            <Typography
+              variant="caption"
               sx={{
-                mt: 1,
+                display: "block",
+                color: "grey.600",
+                mb: 1,
+                borderTop: 1,
+                borderColor: "grey.200",
+                pt: 1.5,
+              }}
+            >
+              Last updated: {new Date(location.timestamp).toLocaleString()}
+            </Typography>
+          )}
+
+          {location?.accuracy && location.accuracy > 1000 && (
+            <Typography
+              variant="caption"
+              sx={{
+                display: "block",
+                color: "warning.main",
+                mb: 1.5,
+                fontWeight: 500,
+                fontSize: "0.7rem"
+              }}
+            >
+              ⚠️ Location is approximate (~{Math.round(location.accuracy / 1000)}km). Use the search below or map for exact location.
+            </Typography>
+          )}
+
+          {/* Inline Search Field */}
+          <Box sx={{ position: "relative", mb: 1.5 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Type your town (e.g. Maddur)..."
+              value={locationSearchQuery}
+              onChange={(e) => handleLocationSearch(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  fontSize: '0.875rem',
+                }
+              }}
+            />
+            {locationSearchResults.length > 0 && (
+              <Box sx={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                bgcolor: "background.paper",
+                borderRadius: 2,
+                boxShadow: 3,
+                maxHeight: 180,
+                overflowY: "auto",
+                zIndex: 9999,
+                mt: 0.5
+              }}>
+                {locationSearchResults.map((item) => (
+                  <Box
+                    key={item.place_id}
+                    onClick={() => handleSelectLocationResult(item)}
+                    sx={{
+                      px: 1.5,
+                      py: 1,
+                      cursor: "pointer",
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                      "&:hover": { bgcolor: "action.hover" },
+                      "&:last-child": { borderBottom: "none" }
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                      {item.display_name.split(',')[0]}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      {item.display_name}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
+
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            {/* Direct Fetch Current Location Button */}
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              startIcon={isDetectingLocation ? <CircularProgress size={18} color="inherit" /> : <MyLocationIcon />}
+              disabled={isDetectingLocation}
+              onClick={handleDetectCurrentLocation}
+              sx={{
                 textTransform: "none",
                 borderRadius: 2,
                 py: 1,
-                px: 3,
-                minWidth: "200px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                fontWeight: 600,
+                boxShadow: "none",
+                "&:hover": { boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)" }
+              }}
+            >
+              {isDetectingLocation ? "Detecting location..." : "Use Current Live Location"}
+            </Button>
+
+            {/* Set Location on Map Button */}
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<MapIcon />}
+              onClick={() => { handleOpenLocationPicker(); handleLocationMenuClose(); }}
+              sx={{
+                textTransform: "none",
+                borderRadius: 2,
+                py: 1,
+                borderColor: "grey.300",
+                color: "grey.800",
+                "&:hover": { borderColor: "grey.400", backgroundColor: "grey.50" }
               }}
             >
               Set Location on Map

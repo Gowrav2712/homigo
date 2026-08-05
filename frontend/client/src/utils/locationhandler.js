@@ -16,35 +16,96 @@ export const handleLocationAccess = () => {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+    // Use watchPosition for progressive GPS refinement
+    let bestAccuracy = Infinity;
+    let resolved = false;
+    let timeoutId;
+
+    const watchId = navigator.geolocation.watchPosition(
       async (position) => {
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`
-          );
-          const data = await response.json();
+        const { latitude, longitude, accuracy } = position.coords;
 
-          const locationData = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            address: data.display_name || `Lat: ${position.coords.latitude.toFixed(4)}, Lng: ${position.coords.longitude.toFixed(4)}`,
-            timestamp: new Date().toISOString()
-          };
+        // Only process if this reading is more accurate
+        if (accuracy < bestAccuracy) {
+          bestAccuracy = accuracy;
 
-          localStorage.setItem('userLocation', JSON.stringify(locationData));
-          resolve(locationData);
-        } catch (error) {
-          const fallbackData = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            address: `Lat: ${position.coords.latitude.toFixed(4)}, Lng: ${position.coords.longitude.toFixed(4)}`,
-            timestamp: new Date().toISOString()
-          };
-          localStorage.setItem('userLocation', JSON.stringify(fallbackData));
-          resolve(fallbackData);
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&zoom=18`
+            );
+            const data = await response.json();
+
+            let formattedAddress = data.display_name;
+            if (data && data.address) {
+              const addr = data.address;
+              const place = addr.village || addr.town || addr.suburb || addr.city || addr.municipality || addr.county || '';
+              const district = addr.state_district || addr.county || '';
+              const state = addr.state || '';
+              const postcode = addr.postcode || '';
+              const parts = [place, district, state, postcode].filter(Boolean);
+              if (parts.length > 0) {
+                formattedAddress = parts.join(', ');
+              }
+            }
+
+            const locationData = {
+              latitude,
+              longitude,
+              address: formattedAddress || `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`,
+              timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('userLocation', JSON.stringify(locationData));
+
+            // Resolve on good accuracy or keep updating
+            if (accuracy < 100 && !resolved) {
+              resolved = true;
+              navigator.geolocation.clearWatch(watchId);
+              clearTimeout(timeoutId);
+              resolve(locationData);
+            }
+          } catch (error) {
+            const fallbackData = {
+              latitude,
+              longitude,
+              address: `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`,
+              timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('userLocation', JSON.stringify(fallbackData));
+            if (!resolved) {
+              resolved = true;
+              navigator.geolocation.clearWatch(watchId);
+              clearTimeout(timeoutId);
+              resolve(fallbackData);
+            }
+          }
         }
       },
       (error) => {
+        console.warn("Geolocation positioning fallback:", error);
+        navigator.geolocation.clearWatch(watchId);
+        clearTimeout(timeoutId);
+        if (!resolved) {
+          resolved = true;
+          const stored = localStorage.getItem('userLocation');
+          let data = defaultLocation;
+          if (stored) {
+            try {
+              data = JSON.parse(stored);
+            } catch(e) {}
+          }
+          localStorage.setItem('userLocation', JSON.stringify(data));
+          resolve(data);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+    );
+
+    // Safety timeout — resolve with best available after 10 seconds
+    timeoutId = setTimeout(() => {
+      navigator.geolocation.clearWatch(watchId);
+      if (!resolved) {
+        resolved = true;
         const stored = localStorage.getItem('userLocation');
         let data = defaultLocation;
         if (stored) {
@@ -52,11 +113,9 @@ export const handleLocationAccess = () => {
             data = JSON.parse(stored);
           } catch(e) {}
         }
-        localStorage.setItem('userLocation', JSON.stringify(data));
         resolve(data);
-      },
-      { timeout: 8000, maximumAge: 60000 }
-    );
+      }
+    }, 10000);
   });
 };
 
@@ -70,7 +129,3 @@ export const requestAndStoreLocation = async (onSuccess, onError) => {
     return false;
   }
 };
-
-
-
-  

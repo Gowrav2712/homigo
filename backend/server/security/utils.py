@@ -29,17 +29,28 @@ logger = logging.getLogger(__name__)
 
 def get_client_ip(request: HttpRequest) -> str:
     """
-    Return the client's IP address from REMOTE_ADDR.
-    Only reads X-Forwarded-For when SECURITY_TRUSTED_PROXY is True in settings.
+    Return the client's IP address from HttpRequest.
+    Reads X-Forwarded-For, X-Real-IP, and CF-Connecting-IP when SECURITY_TRUSTED_PROXY is True.
     """
     trusted_proxy = getattr(settings, 'SECURITY_TRUSTED_PROXY', False)
 
     if trusted_proxy:
+        # Check Cloudflare IP header
+        cf_ip = request.META.get('HTTP_CF_CONNECTING_IP')
+        if cf_ip:
+            return cf_ip.strip()
+
+        # Check X-Real-IP header
+        real_ip = request.META.get('HTTP_X_REAL_IP')
+        if real_ip:
+            return real_ip.strip()
+
+        # Check X-Forwarded-For header
         xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
         if xff:
             return xff.split(',')[0].strip()
 
-    return request.META.get('REMOTE_ADDR', '127.0.0.1')
+    return request.META.get('REMOTE_ADDR', '127.0.0.1') or '127.0.0.1'
 
 
 # ─── Cache Key Helpers ────────────────────────────────────────────────────────
@@ -173,26 +184,48 @@ def send_security_alert_email(event: Any) -> bool:
 
 def _fetch_city(ip: str) -> str:
     """
-    Call ip-api.com to get the approximate city for an IP address.
-    Returns the city name string, or empty string on failure.
-    Free tier, no API key needed. Only returns city-level data.
+    Call IP geolocation APIs (ip-api.com, freeipapi.com) to get city for an IP address.
+    Returns the city name string, or 'localhost' / empty string on failure.
+    Requires no user permissions or browser prompts.
     """
-    if ip in ('127.0.0.1', '::1', 'localhost'):
+    mock_ip = getattr(settings, 'SECURITY_DEV_MOCK_IP', None)
+    target_ip = mock_ip if (ip in ('127.0.0.1', '::1', 'localhost') and mock_ip) else ip
+
+    if target_ip in ('127.0.0.1', '::1', 'localhost'):
         return 'localhost'
 
+    # Primary API: ip-api.com
     try:
         resp = http_requests.get(
-            f"http://ip-api.com/json/{ip}",
+            f"http://ip-api.com/json/{target_ip}",
             params={'fields': 'status,city,regionName,country'},
             timeout=5,
         )
         if resp.status_code == 200:
             data = resp.json()
             if data.get('status') == 'success':
-                parts = filter(None, [data.get('city'), data.get('regionName'), data.get('country')])
+                parts = list(filter(None, [data.get('city'), data.get('regionName'), data.get('country')]))
+                if parts:
+                    return ', '.join(parts)
+    except Exception as e:
+        logger.warning(f"Primary IP geolocation failed for {target_ip}: {e}")
+
+    # Fallback API: freeipapi.com
+    try:
+        resp = http_requests.get(
+            f"https://freeipapi.com/api/json/{target_ip}",
+            timeout=5,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            city = data.get('cityName')
+            region = data.get('regionName')
+            country = data.get('countryName')
+            parts = list(filter(None, [city, region, country]))
+            if parts:
                 return ', '.join(parts)
     except Exception as e:
-        logger.warning(f"IP geolocation failed for {ip}: {e}")
+        logger.warning(f"Fallback IP geolocation failed for {target_ip}: {e}")
 
     return ''
 
