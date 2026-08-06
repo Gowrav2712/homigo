@@ -14,12 +14,6 @@ class SecurityEvent(models.Model):
     ip_address = models.GenericIPAddressField(
         help_text=_("Source IP address of the failed login attempts")
     )
-    city = models.CharField(
-        max_length=100,
-        blank=True,
-        default='',
-        help_text=_("Approximate city resolved via IP geolocation (filled asynchronously)")
-    )
     attempted_username = models.CharField(
         max_length=254,
         blank=True,

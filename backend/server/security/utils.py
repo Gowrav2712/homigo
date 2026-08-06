@@ -145,7 +145,6 @@ def send_security_alert_email(event: Any) -> bool:
         "A source has made {count} failed login attempts within the configured window.\n\n"
         "Details:\n"
         "  • IP Address       : {ip}\n"
-        "  • Approximate City : {city}\n"
         "  • Attempted Email  : {username}\n"
         "  • Timestamp        : {timestamp}\n"
         "  • User-Agent       : {ua}\n"
@@ -158,7 +157,6 @@ def send_security_alert_email(event: Any) -> bool:
         "This is an automated security alert from Homigo.\n"
     ).format(
         ip=event.ip_address,
-        city=event.city or '(resolving...)',
         username=event.attempted_username or '(unknown)',
         timestamp=event.timestamp.strftime('%Y-%m-%d %H:%M:%S %Z') if event.timestamp else 'N/A',
         ua=event.user_agent[:200] if event.user_agent else '(none)',
@@ -180,153 +178,16 @@ def send_security_alert_email(event: Any) -> bool:
         return False
 
 
-# ─── IP Geolocation (Async) ──────────────────────────────────────────────────
-
-# ─── IP Geolocation (Async) ──────────────────────────────────────────────────
-
-def _is_private_ip(ip_str: str) -> bool:
-    """Check if an IP string is a private, loopback, or local IP address."""
-    import ipaddress
-    try:
-        ip_obj = ipaddress.ip_address(ip_str)
-        return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved or ip_obj.is_link_local
-    except ValueError:
-        return ip_str in ('127.0.0.1', '::1', 'localhost')
-
-
-def _fetch_city(ip: str) -> str:
-    """
-    Call IP geolocation APIs (ip-api.com, freeipapi.com, ipwho.is) to get city for an IP address.
-    For local/private IPs, auto-resolves public WAN IP geolocation or uses SECURITY_DEV_MOCK_IP.
-    Returns city name string (e.g., 'Bengaluru, Karnataka, India') or 'Local Network'.
-    """
-    mock_ip = getattr(settings, 'SECURITY_DEV_MOCK_IP', None)
-    target_ip = mock_ip if (_is_private_ip(ip) and mock_ip) else ip
-
-    # 1. Handle local / private network IPs
-    if _is_private_ip(target_ip):
-        try:
-            # Auto-detect public WAN IP location when running locally
-            resp = http_requests.get("http://ip-api.com/json/", timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                if data.get('status') == 'success':
-                    parts = list(filter(None, [data.get('city'), data.get('regionName'), data.get('country')]))
-                    if parts:
-                        return ', '.join(parts)
-        except Exception as e:
-            logger.warning(f"Public WAN IP auto-lookup failed: {e}")
-        return 'Local Network'
-
-    # 2. Primary API: ip-api.com
-    try:
-        resp = http_requests.get(
-            f"http://ip-api.com/json/{target_ip}",
-            params={'fields': 'status,city,regionName,country'},
-            timeout=5,
-        )
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get('status') == 'success':
-                parts = list(filter(None, [data.get('city'), data.get('regionName'), data.get('country')]))
-                if parts:
-                    return ', '.join(parts)
-    except Exception as e:
-        logger.warning(f"Primary IP geolocation failed for {target_ip}: {e}")
-
-    # 3. Fallback API 1: freeipapi.com
-    try:
-        resp = http_requests.get(
-            f"https://freeipapi.com/api/json/{target_ip}",
-            timeout=5,
-        )
-        if resp.status_code == 200:
-            data = resp.json()
-            city = data.get('cityName')
-            region = data.get('regionName')
-            country = data.get('countryName')
-            parts = list(filter(None, [city, region, country]))
-            if parts:
-                return ', '.join(parts)
-    except Exception as e:
-        logger.warning(f"Fallback 1 IP geolocation failed for {target_ip}: {e}")
-
-    # 4. Fallback API 2: ipwho.is
-    try:
-        resp = http_requests.get(
-            f"http://ipwho.is/{target_ip}",
-            timeout=5,
-        )
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get('success'):
-                city = data.get('city')
-                region = data.get('region')
-                country = data.get('country')
-                parts = list(filter(None, [city, region, country]))
-                if parts:
-                    return ', '.join(parts)
-    except Exception as e:
-        logger.warning(f"Fallback 2 IP geolocation failed for {target_ip}: {e}")
-
-    return 'Unknown'
-
-
-# ─── Background Task (Geolocation + Email) ───────────────────────────────────
-
-def _background_task(ip: str, event_id: Any) -> None:
-    """
-    Worker thread target for resolving city via IP geolocation.
-    """
-    from django.db import close_old_connections
-    from .models import SecurityEvent
-
-    close_old_connections()
-
-    try:
-        event = None
-        for attempt in range(5):
-            try:
-                event = SecurityEvent.objects.get(pk=event_id)  # type: ignore[attr-defined]
-                break
-            except SecurityEvent.DoesNotExist:  # type: ignore[attr-defined]
-                import time
-                time.sleep(0.1)
-
-        if not event:
-            return
-
-        city = _fetch_city(ip)
-        if city:
-            event.city = city
-            event.save(update_fields=['city'])
-        elif not event.city:
-            event.city = 'Unknown'
-            event.save(update_fields=['city'])
-
-        logger.info(f"Security city resolution complete for event {event.id} (IP: {ip}, City: {event.city})")
-
-    except Exception as err:
-        logger.error(f"Error in security background task: {err}")
-    finally:
-        close_old_connections()
-
-
 # ─── Create Security Event ────────────────────────────────────────────────────
 
-def create_security_event(ip: str, username: str, user_agent: str, count: int, initial_city: str = '') -> Any:
+def create_security_event(ip: str, username: str, user_agent: str, count: int) -> Any:
     """
-    Save a SecurityEvent record, send alert email to admin immediately,
-    and spawn a worker thread for city geolocation.
+    Save a SecurityEvent record and send alert email to admin immediately.
     """
     from .models import SecurityEvent
-
-    # Resolve initial city synchronously or use fallback
-    resolved_city = initial_city if initial_city else _fetch_city(ip)
 
     event = SecurityEvent.objects.create(  # type: ignore[attr-defined]
         ip_address=ip,
-        city=resolved_city or 'Unknown',
         attempted_username=username,
         user_agent=user_agent,
         failed_attempt_count=count,
@@ -337,14 +198,5 @@ def create_security_event(ip: str, username: str, user_agent: str, count: int, i
     if email_ok:
         event.email_sent = True
         event.save(update_fields=['email_sent'])
-
-    # Spawn background thread to re-verify/refine city if needed
-    if resolved_city in ('', 'Unknown'):
-        thread = threading.Thread(
-            target=_background_task,
-            args=(ip, event.pk),
-            daemon=False,
-        )
-        thread.start()
 
     return event

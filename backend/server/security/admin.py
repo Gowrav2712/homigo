@@ -9,22 +9,22 @@ class SecurityEventAdmin(admin.ModelAdmin):
     """Admin interface for reviewing suspicious login events."""
 
     list_display = (  # type: ignore[assignment]
-        'ip_address', 'city', 'attempted_username',
+        'ip_address', 'attempted_username',
         'timestamp', 'failed_attempt_count', 'email_sent', 'is_resolved',
     )
     list_filter = ('is_resolved', 'email_sent', 'timestamp')
-    search_fields = ('ip_address', 'attempted_username', 'city')
+    search_fields = ('ip_address', 'attempted_username')
     ordering = ('-timestamp',)
 
     readonly_fields = (
-        'ip_address', 'city', 'attempted_username',
+        'ip_address', 'attempted_username',
         'timestamp', 'user_agent', 'failed_attempt_count', 'email_sent',
     )
 
     fieldsets = (
         (_('Event Details'), {
             'fields': (
-                'ip_address', 'city', 'attempted_username',
+                'ip_address', 'attempted_username',
                 'timestamp', 'user_agent', 'failed_attempt_count',
             )
         }),
